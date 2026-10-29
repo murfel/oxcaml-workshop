@@ -45,6 +45,8 @@ RUN opam switch create "${OXCAML_SWITCH}" \
       "oxcaml-compiler.${OXCAML_COMPILER}" --yes
 
 RUN opam install -y dune ocaml-lsp-server merlin \
+      "ppxlib_jane.v0.18~preview.130.106+341" \
+      "ocaml_intrinsics_kernel.v0.18~preview.130.106+341" \
     && opam clean -a --yes
 
 RUN echo 'eval $(opam env)' >> /home/vscode/.bashrc \
