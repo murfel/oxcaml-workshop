@@ -1,6 +1,6 @@
 # OxCaml workshop
 
-## Run it on GitHub Codespaces (easiest)
+## Run it on GitHub Codespaces
 
 Codespaces runs the container on GitHub's servers and gives you VS Code in
 your browser. Nothing to install locally.
