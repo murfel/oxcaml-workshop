@@ -11,6 +11,8 @@
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
 
 ARG OXCAML_COMPILER=5.2.0minus39
+# oxcaml/opam-repository commit known to work with OXCAML_COMPILER.
+ARG OXCAML_REPO_COMMIT=afddc8337950dbc02863fe30ae58735a1cf2719f
 ARG OXCAML_SWITCH=oxcaml
 
 LABEL org.opencontainers.image.description="OxCaml ${OXCAML_COMPILER} devcontainer"
@@ -39,7 +41,7 @@ RUN opam init --disable-sandboxing --bare --yes
 # The OxCaml compiler and its tooling live in the oxcaml opam repository,
 # layered on top of the default repository.
 RUN opam switch create "${OXCAML_SWITCH}" \
-      --repos "ox=git+https://github.com/oxcaml/opam-repository.git,default" \
+      --repos "ox=git+https://github.com/oxcaml/opam-repository.git#${OXCAML_REPO_COMMIT},default" \
       "oxcaml-compiler.${OXCAML_COMPILER}" --yes
 
 RUN opam install -y dune ocaml-lsp-server merlin \
