@@ -1,0 +1,2 @@
+- introduce shared/shareable with everything, edit the exercises accordingly
+- do not `dune fmt` because commented-out code and comments become squished

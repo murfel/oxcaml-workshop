@@ -1,0 +1,10 @@
+# dune build output
+_build/
+*.install
+
+# macOS
+.DS_Store
+
+# IntelliJ, because I'm crazy enough to do ocaml there
+.idea/
+.junie/
