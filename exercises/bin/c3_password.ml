@@ -3,7 +3,7 @@ open Await
 
 let main () =
   let (P key) = Capsule.Prim.create () in
-  let _capsules = List.init 3 ~f:(fun i -> Capsule.Data.create (fun () -> ref i)) in
+  let capsules = List.init 3 ~f:(fun i -> Capsule.Data.create (fun () -> ref i)) in
   (* Exercise: You have a capsule key and a list of capsule data wrapping [int ref]s. Use
      the key to open all capsules and return the list of stored [int]s. Use
      [Capsule.Prim.Key.access] and [Capsule.Data.unwrap]. Do not use the passwords.
@@ -19,7 +19,22 @@ let main () =
         checks the modes, it doesn't yet know it's [int]. You need to specify the type
         directly. The simplest syntax is [~f:(fun access : int -> ...)].
   *)
-  let #(all_data1, key) = #([], key) in
+  (* Solution 1: [Key.access] takes the unique key and gives it back, so we thread it
+     through the recursion by hand. *)
+  let #(all_data1, key) =
+    let rec go key capsules =
+      match capsules with
+      | [] -> #([], key)
+      | capsule :: capsules ->
+        let #(datum, key) =
+          Capsule.Prim.Key.access key ~f:(fun access : int ->
+            !(Capsule.Data.unwrap ~access capsule))
+        in
+        let #(data, key) = go key capsules in
+        #(datum :: data, key)
+    in
+    go key capsules
+  in
   (* Exercise: Now, do the same, but use the passwords ([Capsule.Prim.Key.with_password],
      [Capsule.Prim.access], [Capsule.Data.unwrap]).
 
@@ -39,8 +54,23 @@ let main () =
         assumptions. You need to disable the tail call optimisation by placing a
         [@nontail] annotation at the end of the tail call.
   *)
-  let #(all_data2, key) = #([], key) in
-  let _ = all_data1 in
+  (* Solution 2: one [with_password] for the whole list. The password is [aliased], so
+     [List.map] can use it for every capsule. The result is wrapped in [Modes.Aliased.t]
+     to satisfy the [@ unique] requirement on [f]'s result. *)
+  let #(all_data2, key) =
+    let #(wrapped, key) =
+      Capsule.Prim.Key.with_password key ~f:(fun password ->
+        List.map capsules ~f:(fun capsule ->
+          Capsule.Prim.access ~password ~f:(fun access ->
+            !(Capsule.Data.unwrap ~access capsule)))
+        |> Modes.Aliased.wrap)
+    in
+    #(Modes.Aliased.unwrap wrapped, key)
+  in
   let _ = key in
-  print_endline "Hello, world!"
+  let to_string data = String.concat ~sep:" " (List.map data ~f:Int.to_string) in
+  printf "all_data1: %s\n" (to_string all_data1);
+  printf "all_data2: %s\n" (to_string all_data2)
 ;;
+
+let () = main ()
