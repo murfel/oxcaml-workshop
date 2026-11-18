@@ -7,12 +7,29 @@
 
    Hover over my_fork_join2 to see the real annotations.
 *)
+
+(* Solution: the real [fork_join2] takes its two branches [@ shareable], so everything
+   they capture ([f], [x] and [g], [y]) must be [@ shareable] as well. Inside a shareable
+   closure, captured values are seen as [shared], so [f] and [g] get [x] and [y] at
+   [shared] (their inferred types are ['a @ shared -> 'b]); we may as well accept [x] and
+   [y] at [shared] too, which lets callers pass already-[shared] values.
+
+   Inferred signature:
+     Parallel.t
+     -> ('a @ shared -> 'b) @ shareable
+     -> ('c @ shared -> 'd) @ shareable
+     -> 'a @ shareable shared
+     -> 'c @ shareable shared
+     -> #('b * 'd)
+
+   Dropping [shared] from [x] and [y] also compiles; they are then accepted only
+   [uncontended], which is the default. *)
 let my_fork_join2
   (par : Parallel.t)
-  (f)
-  (g)
-  (x)
-  (y)
+  (f @ shareable)
+  (g @ shareable)
+  (x @ shareable shared)
+  (y @ shareable shared)
   =
   Parallel.fork_join2 par
                       (fun _ -> f x) (* @ shareable *)
@@ -46,5 +63,4 @@ let example2 (par : Parallel.t) =
   Printf.printf "a: %d, b: %d\n" x' y'
 ;;
 
-(* Uncomment to see if your modes pass this one, too. *)
-(* let () = Parallel_scheduler.with_parallel example2 (* prints x: 42, y: -10 *) *)
+let () = Parallel_scheduler.with_parallel example2 (* prints a: 42, b: -10 *)

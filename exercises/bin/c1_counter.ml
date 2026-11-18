@@ -15,8 +15,24 @@ let reader_iterations = 5
    Use [Capsule.Sync.With_mutex.with_lock] and [Sync.blocking]. See their usage below.
 *)
 
-let writer () = ()
-let reader () = ()
+(* Solution: every access to the counter goes through [with_lock], which acquires the
+   mutex and gives [f] the [int ref] inside the capsule. *)
+let writer () =
+  let sync = Sync.blocking in
+  for _ = 1 to writer_iterations do
+    Capsule.Sync.With_mutex.with_lock sync counter ~f:(fun _sync counter -> incr counter)
+  done
+;;
+
+let reader () =
+  let sync = Sync.blocking in
+  for _ = 1 to reader_iterations do
+    let value =
+      Capsule.Sync.With_mutex.with_lock sync counter ~f:(fun _sync counter -> !counter)
+    in
+    printf "reader saw: %d\n%!" value
+  done
+;;
 
 let run (par : Parallel.t) =
   let #((), ()) =

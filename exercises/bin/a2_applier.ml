@@ -11,7 +11,9 @@
 *)
 
 let () =
-  (* Annotate the modes like let (r @ mode) = ref 42 ... *)
-  let r = ref 42 in
+  let (r @ uncontended) = ref 42 in
+  let (incrementer @ contended) r = r := !r + 1 in
+  let applier (p @ uncontended) = (snd p) (fst p) in
+  applier (r, incrementer);
   Printf.printf "%d\n" !r
 ;;
